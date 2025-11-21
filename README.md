@@ -37,6 +37,12 @@ uv sync --all-extras
 source .venv/bin/activate
 ```
 
+#### Using Nix or NixOS
+
+```sh
+nix develop
+```
+
 ### Simulation
 
 ```sh
