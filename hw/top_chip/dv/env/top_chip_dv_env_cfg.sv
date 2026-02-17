@@ -19,6 +19,7 @@ class top_chip_dv_env_cfg extends uvm_object;
   // External interface agent configs
   rand uart_agent_cfg    m_uart_agent_cfg;
   rand i2c_agent_cfg     m_i2c_agent_cfg;
+  rand spi_agent_cfg     m_spi_device_agent_cfg;
 
   `uvm_object_utils_begin(top_chip_dv_env_cfg)
   `uvm_object_utils_end
@@ -52,6 +53,10 @@ function void top_chip_dv_env_cfg::initialize();
 
   // Disable functional coverage collection for chip level
   m_i2c_agent_cfg.en_cov = 0;
+
+  // Create SPI device agent config obj
+  m_spi_device_agent_cfg = spi_agent_cfg::type_id::create("m_spi_device_agent_cfg");
+  m_spi_device_agent_cfg.if_mode = dv_utils_pkg::Device;
 endfunction : initialize
 
 function void top_chip_dv_env_cfg::get_mem_image_files_from_plusargs();
