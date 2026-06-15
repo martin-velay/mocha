@@ -104,6 +104,9 @@ module top_chip_verilator (
     .dram_req_o  (dram_req),
     .dram_resp_i (dram_resp),
 
+    .sw_dv_req_o  (sw_dv_req ),
+    .sw_dv_resp_i (sw_dv_resp),
+
     .rest_of_chip_req_o  ( ), // Rest of chip AXI tie-off
     .rest_of_chip_resp_i ('0),
 
@@ -197,30 +200,17 @@ module top_chip_verilator (
   // SW to adapt its behavior when running on Verilator vs other simulators or real hardware.
   localparam bit [31:0] VERILATOR_HW_ID                  = 32'h0000_001A;
 
-  // Signals to connect the sink
-  top_pkg::axi_req_t  sim_sram_cpu_req;
-  top_pkg::axi_resp_t sim_sram_cpu_resp;
-  top_pkg::axi_req_t  sim_sram_xbar_req;
-  top_pkg::axi_resp_t sim_sram_xbar_resp;
+  // SW-DV window AXI signals: routed directly from the main crossbar via the dedicated port.
+  top_pkg::axi_req_t  sw_dv_req;
+  top_pkg::axi_resp_t sw_dv_resp;
 
-  // Detect SW test termination.
+  // SW-DV sink: receives only SW-DV window traffic from the crossbar.
   sim_sram_axi_sink u_sim_sram (
-    .clk_i       (`DUT.clkmgr_clocks.clk_main_infra),
-    .rst_ni      (`DUT.rstmgr_resets.rst_main_n[rstmgr_pkg::DomainMainSel]),
-    .cpu_req_i   (sim_sram_cpu_req                 ),
-    .cpu_resp_o  (sim_sram_cpu_resp                ),
-    .xbar_req_o  (sim_sram_xbar_req                ),
-    .xbar_resp_i (sim_sram_xbar_resp               )
+    .clk_i      (`DUT.clkmgr_clocks.clk_main_infra                       ),
+    .rst_ni     (`DUT.rstmgr_resets.rst_main_n[rstmgr_pkg::DomainMainSel]),
+    .axi_req_i  (sw_dv_req                                               ),
+    .axi_resp_o (sw_dv_resp                                              )
   );
-
-  // Connect the sim SRAM directly at CVA6 AXI interface
-  assign `DUT.sim_to_cva6_resp = sim_sram_cpu_resp;
-  // Drive the request back into the DUT's Crossbar
-  assign `DUT.xbar_host_req[top_pkg::CVA6] = sim_sram_xbar_req;
-
-  // Capture inputs FROM the DUT (Monitoring)
-  assign sim_sram_cpu_req   = `DUT.cva6_to_sim_req;
-  assign sim_sram_xbar_resp = `DUT.xbar_host_resp[top_pkg::CVA6];
 
   // Instantiate the SW test status interface & connect signals from sim_sram_if instance
   // instantiated inside sim_sram. Bind would have worked nicely here, but Verilator segfaults

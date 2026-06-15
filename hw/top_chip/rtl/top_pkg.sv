@@ -33,7 +33,7 @@ package top_pkg;
 
   // Mocha AXI crossbar parameters
   localparam int AxiXbarHosts   = 1;
-  localparam int AxiXbarDevices = 6;
+  localparam int AxiXbarDevices = 7;
 
   // Mocha AXI crossbar hosts and devices
   typedef enum int unsigned {
@@ -44,9 +44,10 @@ package top_pkg;
     RomCtrlMem = 0,
     SRAM       = 1,
     Mailbox    = 2,
-    RestOfChip = 3,
-    TlCrossbar = 4,
-    DRAM       = 5
+    SwDvWindow = 3,
+    RestOfChip = 4,
+    TlCrossbar = 5,
+    DRAM       = 6
   } axi_devices_t;
 
   typedef enum longint unsigned {
@@ -54,7 +55,8 @@ package top_pkg;
     SRAMBase       = 64'h1000_0000,
     DebugMemBase   = 64'h2000_0000,
     MailboxBase    = 64'h2001_0000,
-    RestOfChipBase = 64'h2002_0000,
+    SwDvWindowBase = 64'h2002_0000,
+    RestOfChipBase = 64'h3000_0000,
     TlCrossbarBase = 64'h4000_0000,
     DRAMBase       = 64'h8000_0000
   } axi_addr_start_t;
@@ -64,7 +66,8 @@ package top_pkg;
   localparam longint unsigned SRAMLength         = 64'h0002_0000;
   localparam longint unsigned DebugMemLength     = 64'h0000_1000;
   localparam longint unsigned MailboxLength      = 64'h0001_0000;
-  localparam longint unsigned RestOfChipLength   = 64'h0FFE_8000;   // 0x2002_0000 to 0x3000_7FFF
+  localparam longint unsigned SwDvWindowLength   = 64'h0000_0100;
+  localparam longint unsigned RestOfChipLength   = 64'h0000_8000;
   localparam longint unsigned TlCrossbarLength   = 64'h1000_0000;
   localparam longint unsigned DRAMPhysicalLength = 64'h4000_0000;
 
@@ -78,7 +81,7 @@ package top_pkg;
 
   // Rest of chip AXI crossbar parameters
   localparam int RestOfChipAxiXbarHosts   = 1;
-  localparam int RestOfChipAxiXbarDevices = 2;
+  localparam int RestOfChipAxiXbarDevices = 1;
 
   // Rest of chip AXI crossbar hosts and devices
   typedef enum int unsigned {
@@ -86,18 +89,15 @@ package top_pkg;
   } rest_of_chip_axi_hosts_t;
 
   typedef enum int unsigned {
-    Ethernet         = 0,
-    SwDvWindowDevIdx = 1
+    Ethernet = 0
   } rest_of_chip_axi_devices_t;
 
   typedef enum longint unsigned {
-    EthernetBase   = 64'h3000_0000,
-    SwDvWindowBase = 64'h2002_0000
+    EthernetBase = 64'h3000_0000
   } rest_of_chip_axi_addr_start_t;
 
   // Memory lengths
-  localparam longint unsigned EthernetLength   = 64'h0000_8000;
-  localparam longint unsigned SwDvWindowLength = 64'h0000_0100;
+  localparam longint unsigned EthernetLength = 64'h0000_8000;
 
   // Memory address masks
   localparam longint unsigned EthernetMask = EthernetLength - 1;

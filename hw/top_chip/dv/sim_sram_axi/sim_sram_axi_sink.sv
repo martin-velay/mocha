@@ -14,50 +14,13 @@ module sim_sram_axi_sink #(
   input logic clk_i,
   input logic rst_ni,
 
-  // Interface from CVA6 CPU
-  input  top_pkg::axi_req_t  cpu_req_i,
-  output top_pkg::axi_resp_t cpu_resp_o,
-
-  // Interface to AXI Crossbar
-  output top_pkg::axi_req_t  xbar_req_o,
-  input  top_pkg::axi_resp_t xbar_resp_i
+  // AXI slave port: receives only SW-DV window traffic from the crossbar
+  input  top_pkg::axi_req_t  axi_req_i,
+  output top_pkg::axi_resp_t axi_resp_o
 );
 
   import top_pkg::*;
   import cva6_config_pkg::*;
-
-  // Internal AXI signals for the intercepted path
-  axi_req_t  sim_req;
-  axi_resp_t sim_resp;
-
-  logic aw_select;
-  logic ar_select;
-
-  // Selection Logic
-  assign aw_select  = (cpu_req_i.aw.addr >= u_sim_sram_if.start_addr) &&
-                      (cpu_req_i.aw.addr < u_sim_sram_if.start_addr + u_sim_sram_if.sw_dv_size);
-  assign ar_select  = (cpu_req_i.ar.addr >= u_sim_sram_if.start_addr) &&
-                      (cpu_req_i.ar.addr < u_sim_sram_if.start_addr + u_sim_sram_if.sw_dv_size);
-
-  // AXI Demux: index 0 = System Bus, index 1 = Sim Sink
-  axi_demux_simple #(
-    .AxiIdWidth       (AxiIdWidth             ),
-    .AtopSupport      (1'b0                   ),
-    .axi_req_t        (axi_req_t              ),
-    .axi_resp_t       (axi_resp_t             ),
-    .NoMstPorts       (2                      ),
-    .MaxTrans         (8                      )
-  ) i_axi_demux (
-    .clk_i,
-    .rst_ni,
-    .test_i           (1'b0                   ),
-    .slv_req_i        (cpu_req_i              ),
-    .slv_aw_select_i  (aw_select              ),
-    .slv_ar_select_i  (ar_select              ),
-    .slv_resp_o       (cpu_resp_o             ),
-    .mst_reqs_o       ({sim_req,  xbar_req_o} ),
-    .mst_resps_i      ({sim_resp, xbar_resp_i})
-  );
 
   // AXI Protocol conversion to memory interface
   logic                             mem_req;
@@ -92,8 +55,8 @@ module sim_sram_axi_sink #(
     .clk_i        (clk_i        ),
     .rst_ni       (rst_ni       ),
     .busy_o       (             ),  // Not used
-    .axi_req_i    (sim_req      ),
-    .axi_resp_o   (sim_resp     ),
+    .axi_req_i    (axi_req_i    ),
+    .axi_resp_o   (axi_resp_o   ),
     .mem_req_o    (mem_req      ),
     .mem_gnt_i    (1'b1         ),  // ALWAYS GRANT: Sim SRAM is never busy
     .mem_addr_o   (mem_addr     ),
@@ -158,7 +121,7 @@ module sim_sram_axi_sink #(
 
   // Simulation SRAM Interface Instance
   sim_sram_axi_if u_sim_sram_if (.clk_i, .rst_ni);
-  assign u_sim_sram_if.req  = sim_req;
-  assign u_sim_sram_if.resp = sim_resp;
+  assign u_sim_sram_if.req  = axi_req_i;
+  assign u_sim_sram_if.resp = axi_resp_o;
 
 endmodule : sim_sram_axi_sink
